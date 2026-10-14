@@ -7,7 +7,6 @@ import {
   Settings, 
   Share2, 
   ShieldAlert, 
-  TrendingUp, 
   DollarSign, 
   Sparkles, 
   CheckCircle2, 
@@ -15,19 +14,40 @@ import {
   Plus
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import type { Sorteo, VentaItem, ConfiguracionBanca, ResumenNumero } from './types';
+import type { Sorteo, VentaItem, ConfiguracionBanca, ResumenNumero, VendedorLocal } from './types';
 import './App.css';
+
+const DEFAULT_VENDEDORES: VendedorLocal[] = [
+  {
+    id: 'vend-1',
+    nombre: 'Diego Orozco',
+    nombreLocal: 'Puesto Central San José',
+    telefono: '8761-1422',
+    logoEmoji: '🎰',
+    activo: true
+  },
+  {
+    id: 'vend-2',
+    nombre: 'Puesto La Fortuna',
+    nombreLocal: 'Sucursal Alajuela',
+    telefono: '8888-2233',
+    logoEmoji: '🍀',
+    activo: true
+  }
+];
 
 const DEFAULT_CONFIG: ConfiguracionBanca = {
   moneda: '₡',
   pagoMultiplicador: 80,
   topeMaximoPorNumero: 5000, // Máximo ₡5,000 por número en ventas acumuladas
   pagoMaximoTolerable: 400000, // ₡5,000 * 80 = ₡400,000 premio
-  nombreBanca: 'Banca La Fortuna',
-  contactoWhatsApp: '+506 8888-9999',
-  sinpeTelefono: '8888-9999',
-  sinpeNombreTitular: 'BancaControl Soporte CR',
+  nombreBanca: 'BancaControl Costa Rica',
+  contactoWhatsApp: '+506 8761-1422',
+  sinpeTelefono: '8761-1422',
+  sinpeNombreTitular: 'Diego Orozco Fonseca',
   hotmartLink: 'https://pay.hotmart.com/ejemplo-bancacontrol',
+  vendedorActivoId: 'vend-1',
+  vendedores: DEFAULT_VENDEDORES,
   subscripcion: {
     plan: 'pro',
     activa: true,
@@ -187,6 +207,17 @@ export function App() {
     };
   }, [sorteoSeleccionado, ventasSorteoActual, ventaBrutaTotal]);
 
+  const vendedorActual = useMemo(() => {
+    return config.vendedores.find(v => v.id === config.vendedorActivoId) || config.vendedores[0] || {
+      id: 'vend-1',
+      nombre: 'Diego Orozco',
+      nombreLocal: 'Puesto Principal',
+      telefono: config.sinpeTelefono,
+      logoEmoji: '🎰',
+      activo: true
+    };
+  }, [config.vendedores, config.vendedorActivoId, config.sinpeTelefono]);
+
   // Registro de Venta
   const handleRegistrarVenta = () => {
     setErrorMsg('');
@@ -223,7 +254,7 @@ export function App() {
       numero: numFormateado,
       monto: montoInput,
       cliente: clienteInput.trim() || 'Cliente Mostrador',
-      vendedor: 'Principal',
+      vendedor: `${vendedorActual.logoEmoji} ${vendedorActual.nombreLocal}`,
       timestamp: Date.now(),
       tiqueteCodigo: `TK-${Math.floor(100000 + Math.random() * 900000)}`
     };
@@ -281,15 +312,17 @@ export function App() {
 
   // Compartir Tiquete por WhatsApp
   const handleCompartirWhatsApp = (tiquete: VentaItem) => {
-    const texto = `🎟️ *TIQUETE DE JUGADA - ${config.nombreBanca}* 🎟️%0A` +
+    const texto = `${vendedorActual.logoEmoji} *TIQUETE DE JUGADA - ${vendedorActual.nombreLocal.toUpperCase()}* ${vendedorActual.logoEmoji}%0A` +
+      `🏢 *Banca:* ${config.nombreBanca}%0A` +
+      `👤 *Vendedor:* ${vendedorActual.nombre} (Tel: ${vendedorActual.telefono})%0A` +
       `📅 *Sorteo:* ${sorteoSeleccionado.nombre}%0A` +
       `🆔 *Tiquete:* ${tiquete.tiqueteCodigo}%0A` +
-      `👤 *Cliente:* ${tiquete.cliente}%0A` +
-      `🔢 *Número:* [ ${tiquete.numero} ]%0A` +
-      `💰 *Monto:* ${config.moneda}${tiquete.monto.toLocaleString()}%0A` +
-      `🏆 *Premio Potencial:* ${config.moneda}${(tiquete.monto * sorteoSeleccionado.multiplicador).toLocaleString()}%0A` +
+      `🎟️ *Cliente:* ${tiquete.cliente}%0A` +
+      `🔢 *Número:* [ *${tiquete.numero}* ]%0A` +
+      `💰 *Monto Apostado:* ${config.moneda}${tiquete.monto.toLocaleString()}%0A` +
+      `🏆 *Premio a Cobrar:* ${config.moneda}${(tiquete.monto * sorteoSeleccionado.multiplicador).toLocaleString()}%0A` +
       `⚡ *Hora:* ${new Date(tiquete.timestamp).toLocaleTimeString()}%0A` +
-      `_¡Mucha suerte! Reclame con este comprobante._`;
+      `_¡Mucha suerte! Reclame su premio con este comprobante oficial._`;
 
     window.open(`https://wa.me/?text=${texto}`, '_blank');
   };
@@ -300,20 +333,35 @@ export function App() {
       <header className="top-header">
         <div className="brand-badge">
           <div className="brand-logo-icon">
-            <TrendingUp size={18} />
+            <span style={{ fontSize: '1.2rem' }}>{vendedorActual.logoEmoji}</span>
           </div>
           <div>
-            <h1 className="brand-title">BancaControl <span>PRO</span></h1>
-            <p className="brand-subtitle">{config.nombreBanca} • Micro SaaS</p>
+            <h1 className="brand-title">{vendedorActual.nombreLocal} <span>PRO</span></h1>
+            <p className="brand-subtitle">{config.nombreBanca} • Vendedor: {vendedorActual.nombre}</p>
           </div>
+        </div>
+
+        {/* Selector de Local / Vendedor Activo */}
+        <div className="vendor-switcher">
+          <select
+            value={config.vendedorActivoId}
+            onChange={e => setConfig(prev => ({ ...prev, vendedorActivoId: e.target.value }))}
+            className="vendor-select-dropdown"
+          >
+            {config.vendedores.map(v => (
+              <option key={v.id} value={v.id}>
+                {v.logoEmoji} {v.nombreLocal} ({v.nombre})
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="subscription-status">
           <span className="badge-trial">
-            <Sparkles size={13} /> {config.subscripcion.diasRestantesTrial} días de prueba gratis
+            <Sparkles size={13} /> {config.subscripcion.diasRestantesTrial} días
           </span>
           <button className="btn-upgrade" onClick={() => setTab('config')}>
-            Suscripción Activa
+            Ajustes
           </button>
         </div>
       </header>
@@ -768,6 +816,136 @@ export function App() {
                     onChange={e => setConfig(prev => ({ ...prev, pagoMultiplicador: Number(e.target.value) }))}
                   />
                   <small className="helper">Usualmente 80 a 1 o 70 a 1 según la banca.</small>
+                </div>
+              </div>
+
+              {/* Gestión de Locales y Vendedores */}
+              <div className="vendors-management-section">
+                <div className="vms-header">
+                  <h3>🏪 Locales y Vendedores Registrados</h3>
+                  <button
+                    className="btn-add-vendor"
+                    onClick={() => {
+                      const nuevoId = `vend-${Date.now()}`;
+                      const nuevo: VendedorLocal = {
+                        id: nuevoId,
+                        nombre: `Vendedor ${config.vendedores.length + 1}`,
+                        nombreLocal: `Puesto #${config.vendedores.length + 1}`,
+                        telefono: config.sinpeTelefono,
+                        logoEmoji: '📍',
+                        activo: true
+                      };
+                      setConfig(prev => ({
+                        ...prev,
+                        vendedores: [...prev.vendedores, nuevo],
+                        vendedorActivoId: nuevoId
+                      }));
+                    }}
+                  >
+                    <Plus size={16} /> Agregar Local / Vendedor
+                  </button>
+                </div>
+
+                <div className="vendors-list-cards">
+                  {config.vendedores.map((v, idx) => (
+                    <div key={v.id} className={`vendor-card-item ${v.id === config.vendedorActivoId ? 'active-vendor' : ''}`}>
+                      <div className="vci-top">
+                        <div className="vci-badge">
+                          <input
+                            type="text"
+                            value={v.logoEmoji}
+                            title="Haz clic para cambiar el emoji/logo del local"
+                            onChange={e => {
+                              const val = e.target.value;
+                              setConfig(prev => ({
+                                ...prev,
+                                vendedores: prev.vendedores.map(item => item.id === v.id ? { ...item, logoEmoji: val } : item)
+                              }));
+                            }}
+                            className="vci-emoji-input"
+                          />
+                        </div>
+                        <div className="vci-title-group">
+                          <input
+                            type="text"
+                            value={v.nombreLocal}
+                            placeholder="Nombre del Local / Puesto"
+                            onChange={e => {
+                              const val = e.target.value;
+                              setConfig(prev => ({
+                                ...prev,
+                                vendedores: prev.vendedores.map(item => item.id === v.id ? { ...item, nombreLocal: val } : item)
+                              }));
+                            }}
+                            className="vci-input-name"
+                          />
+                          <span className="vci-sub">Puesto #{idx + 1}</span>
+                        </div>
+                      </div>
+
+                      <div className="vci-fields">
+                        <div className="vci-field">
+                          <label>Nombre del Vendedor</label>
+                          <input
+                            type="text"
+                            value={v.nombre}
+                            placeholder="Ej: Carlos M."
+                            onChange={e => {
+                              const val = e.target.value;
+                              setConfig(prev => ({
+                                ...prev,
+                                vendedores: prev.vendedores.map(item => item.id === v.id ? { ...item, nombre: val } : item)
+                              }));
+                            }}
+                          />
+                        </div>
+
+                        <div className="vci-field">
+                          <label>Teléfono WhatsApp del Local</label>
+                          <input
+                            type="text"
+                            value={v.telefono}
+                            placeholder="8761-1422"
+                            onChange={e => {
+                              const val = e.target.value;
+                              setConfig(prev => ({
+                                ...prev,
+                                vendedores: prev.vendedores.map(item => item.id === v.id ? { ...item, telefono: val } : item)
+                              }));
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="vci-bottom-actions">
+                        <button
+                          className={`btn-select-as-active ${v.id === config.vendedorActivoId ? 'current' : ''}`}
+                          onClick={() => setConfig(prev => ({ ...prev, vendedorActivoId: v.id }))}
+                        >
+                          {v.id === config.vendedorActivoId ? '✓ Local Seleccionado' : 'Seleccionar como Activo'}
+                        </button>
+                        {config.vendedores.length > 1 && (
+                          <button
+                            className="btn-del-vendor"
+                            onClick={() => {
+                              if (window.confirm(`¿Eliminar ${v.nombreLocal}?`)) {
+                                setConfig(prev => {
+                                  const filtered = prev.vendedores.filter(item => item.id !== v.id);
+                                  return {
+                                    ...prev,
+                                    vendedores: filtered,
+                                    vendedorActivoId: prev.vendedorActivoId === v.id ? filtered[0]?.id || '' : prev.vendedorActivoId
+                                  };
+                                });
+                              }
+                            }}
+                          >
+                            Eliminar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

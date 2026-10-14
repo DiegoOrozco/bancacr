@@ -20,6 +20,16 @@ export interface VentaItem {
   tiqueteCodigo: string;
 }
 
+export interface VendedorLocal {
+  id: string;
+  nombre: string;
+  nombreLocal: string;
+  telefono: string;
+  logoEmoji: string; // Emoji representativo o iniciales
+  logoUrl?: string; // URL de logo personalizado opcional
+  activo: boolean;
+}
+
 export interface ConfiguracionBanca {
   moneda: string; // 'CRC' (₡) o 'USD' ($)
   pagoMultiplicador: number; // Ej: 80
@@ -30,6 +40,8 @@ export interface ConfiguracionBanca {
   sinpeTelefono: string;
   sinpeNombreTitular: string;
   hotmartLink: string;
+  vendedorActivoId: string;
+  vendedores: VendedorLocal[];
   subscripcion: {
     plan: 'starter' | 'pro' | 'enterprise';
     activa: boolean;
