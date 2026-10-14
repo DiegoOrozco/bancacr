@@ -19,19 +19,33 @@ import './App.css';
 
 const DEFAULT_VENDEDORES: VendedorLocal[] = [
   {
-    id: 'vend-1',
-    nombre: 'Diego Orozco',
-    nombreLocal: 'Puesto Central San José',
+    id: 'vend-admin',
+    nombre: 'Diego Orozco (Administrador)',
+    nombreLocal: 'Casa Central',
     telefono: '8761-1422',
+    logoEmoji: '👑',
+    pinAcceso: '1234',
+    rol: 'admin',
+    activo: true
+  },
+  {
+    id: 'vend-1',
+    nombre: 'Carlos Murillo',
+    nombreLocal: 'Puesto San José Centro',
+    telefono: '8888-1122',
     logoEmoji: '🎰',
+    pinAcceso: '5555',
+    rol: 'vendedor',
     activo: true
   },
   {
     id: 'vend-2',
-    nombre: 'Puesto La Fortuna',
-    nombreLocal: 'Sucursal Alajuela',
-    telefono: '8888-2233',
+    nombre: 'Andrea Vargas',
+    nombreLocal: 'Puesto Alajuela Parque',
+    telefono: '8888-3344',
     logoEmoji: '🍀',
+    pinAcceso: '7777',
+    rol: 'vendedor',
     activo: true
   }
 ];
@@ -132,17 +146,45 @@ export function App() {
     return sorteos.find(s => s.id === sorteoActivoId) || sorteos[0];
   }, [sorteos, sorteoActivoId]);
 
-  // Ventas del sorteo seleccionado
-  const ventasSorteoActual = useMemo(() => {
-    return ventas.filter(v => v.sorteoId === sorteoSeleccionado.id);
+  // Ventas globales del sorteo seleccionado
+  const ventasSorteoActual = useMemo<VentaItem[]>(() => {
+    return ventas.filter((v: VentaItem) => v.sorteoId === sorteoSeleccionado.id);
   }, [ventas, sorteoSeleccionado]);
 
-  // Venta bruta acumulada
-  const ventaBrutaTotal = useMemo(() => {
-    return ventasSorteoActual.reduce((acc, curr) => acc + curr.monto, 0);
-  }, [ventasSorteoActual]);
+  // Autenticación de Usuario / Vendedor
+  const [usuarioAutenticado, setUsuarioAutenticado] = useState<VendedorLocal | null>(() => {
+    const saved = localStorage.getItem('tiemposcr_sesion_vendedor');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [pinLoginInput, setPinLoginInput] = useState<string>('');
+  const [pinLoginError, setPinLoginError] = useState<string>('');
 
-  // Matriz de acumulación 00-99
+  // Guardar sesión en Storage
+  useEffect(() => {
+    if (usuarioAutenticado) {
+      localStorage.setItem('tiemposcr_sesion_vendedor', JSON.stringify(usuarioAutenticado));
+    } else {
+      localStorage.removeItem('tiemposcr_sesion_vendedor');
+    }
+  }, [usuarioAutenticado]);
+
+  const esAdmin = usuarioAutenticado?.rol === 'admin';
+
+  // Ventas visibles: si es Admin ve todo; si es Vendedor SOLO VE SUS PROPIAS VENTAS
+  const ventasVisibles = useMemo<VentaItem[]>(() => {
+    if (!usuarioAutenticado) return [];
+    if (esAdmin) {
+      return ventasSorteoActual;
+    }
+    return ventasSorteoActual.filter((v: VentaItem) => v.vendedorId === usuarioAutenticado.id);
+  }, [ventasSorteoActual, usuarioAutenticado, esAdmin]);
+
+  // Venta bruta acumulada (según los permisos de quien esté conectado)
+  const ventaBrutaTotal = useMemo<number>(() => {
+    return ventasVisibles.reduce((acc: number, curr: VentaItem) => acc + curr.monto, 0);
+  }, [ventasVisibles]);
+
+  // Matriz de acumulación 00-99 (El riesgo de topes globales se evalúa con TODAS las ventas del sorteo para proteger la banca)
   const matrizRiesgo = useMemo<Record<string, ResumenNumero>>(() => {
     const map: Record<string, ResumenNumero> = {};
     for (let i = 0; i <= 99; i++) {
@@ -157,7 +199,10 @@ export function App() {
       };
     }
 
-    ventasSorteoActual.forEach(v => {
+    // Para la matriz del vendedor se muestran sus números apostados, para el admin el total general
+    const ventasMatriz = esAdmin ? ventasSorteoActual : ventasVisibles;
+
+    ventasMatriz.forEach(v => {
       if (map[v.numero]) {
         map[v.numero].totalApostado += v.monto;
         map[v.numero].cantidadJugadas += 1;
@@ -176,7 +221,7 @@ export function App() {
     });
 
     return map;
-  }, [ventasSorteoActual, config.topeMaximoPorNumero, sorteoSeleccionado]);
+  }, [ventasSorteoActual, ventasVisibles, esAdmin, config.topeMaximoPorNumero, sorteoSeleccionado]);
 
   // Top números más cargados
   const topNumerosCargados = useMemo(() => {
@@ -186,13 +231,13 @@ export function App() {
       .slice(0, 5);
   }, [matrizRiesgo]);
 
-  // Cálculo de Escrutinio / Ganadores
+  // Cálculo de Escrutinio / Ganadores filtrado por usuario conectado
   const resultadoEscrutinio = useMemo(() => {
     if (!sorteoSeleccionado.cerrado || !sorteoSeleccionado.numeroGanador) {
       return null;
     }
     const numGanador = sorteoSeleccionado.numeroGanador;
-    const tiquetesGanadores = ventasSorteoActual.filter(v => v.numero === numGanador);
+    const tiquetesGanadores = ventasVisibles.filter(v => v.numero === numGanador);
     const montoApostadoGanador = tiquetesGanadores.reduce((acc, c) => acc + c.monto, 0);
     const totalPremiosPagar = montoApostadoGanador * sorteoSeleccionado.multiplicador;
     const utilidadNeta = ventaBrutaTotal - totalPremiosPagar;
@@ -205,18 +250,30 @@ export function App() {
       utilidadNeta,
       esGanancia: utilidadNeta >= 0
     };
-  }, [sorteoSeleccionado, ventasSorteoActual, ventaBrutaTotal]);
+  }, [sorteoSeleccionado, ventasVisibles, ventaBrutaTotal]);
 
-  const vendedorActual = useMemo(() => {
-    return config.vendedores.find(v => v.id === config.vendedorActivoId) || config.vendedores[0] || {
-      id: 'vend-1',
-      nombre: 'Diego Orozco',
-      nombreLocal: 'Puesto Principal',
-      telefono: config.sinpeTelefono,
-      logoEmoji: '🎰',
-      activo: true
-    };
-  }, [config.vendedores, config.vendedorActivoId, config.sinpeTelefono]);
+  const vendedorActual = usuarioAutenticado || config.vendedores[0];
+
+  // Iniciar Sesión con PIN
+  const handleLoginPIN = () => {
+    setPinLoginError('');
+    const pin = pinLoginInput.trim();
+    const encontrado = config.vendedores.find(v => v.pinAcceso === pin);
+
+    if (encontrado) {
+      setUsuarioAutenticado(encontrado);
+      setPinLoginInput('');
+      confetti({ particleCount: 50, spread: 60 });
+    } else {
+      setPinLoginError('PIN incorrecto. Consulta al administrador.');
+    }
+  };
+
+  const handleCerrarSesion = () => {
+    if (window.confirm('¿Deseas cerrar la sesión de este terminal?')) {
+      setUsuarioAutenticado(null);
+    }
+  };
 
   // Registro de Venta
   const handleRegistrarVenta = () => {
@@ -238,13 +295,16 @@ export function App() {
       return;
     }
 
-    // Validación de Tope
-    const actualApostado = matrizRiesgo[numFormateado]?.totalApostado || 0;
-    const nuevoTotal = actualApostado + montoInput;
+    // Validación de Tope Global (de todas las mesas combinadas)
+    const totalGlobalNumero = ventasSorteoActual
+      .filter(v => v.numero === numFormateado)
+      .reduce((sum, v) => sum + v.monto, 0);
+
+    const nuevoTotal = totalGlobalNumero + montoInput;
 
     if (nuevoTotal > config.topeMaximoPorNumero) {
-      const espacioDisponible = Math.max(0, config.topeMaximoPorNumero - actualApostado);
-      setErrorMsg(`¡TOPE ALCANZADO para el ${numFormateado}! Máximo permitido: ${config.moneda}${espacioDisponible.toLocaleString()}`);
+      const espacioDisponible = Math.max(0, config.topeMaximoPorNumero - totalGlobalNumero);
+      setErrorMsg(`¡TOPE GLOBAL ALCANZADO para el ${numFormateado}! Espacio restante en la banca: ${config.moneda}${espacioDisponible.toLocaleString()}`);
       return;
     }
 
@@ -255,6 +315,7 @@ export function App() {
       monto: montoInput,
       cliente: clienteInput.trim() || 'Cliente Mostrador',
       vendedor: `${vendedorActual.logoEmoji} ${vendedorActual.nombreLocal}`,
+      vendedorId: vendedorActual.id,
       timestamp: Date.now(),
       tiqueteCodigo: `TK-${Math.floor(100000 + Math.random() * 900000)}`
     };
@@ -327,6 +388,88 @@ export function App() {
     window.open(`https://wa.me/?text=${texto}`, '_blank');
   };
 
+  // Si no ha iniciado sesión, mostrar pantalla de bloqueo / ingreso con PIN
+  if (!usuarioAutenticado) {
+    return (
+      <div className="login-screen-wrapper">
+        <div className="login-card-container">
+          <div className="login-brand">
+            <span className="brand-logo-emoji">🇨🇷</span>
+            <h1>TiemposCR <span>PRO</span></h1>
+            <p>Acceso Seguro al Terminal de Ventas</p>
+          </div>
+
+          <div className="login-form-box">
+            <label>Ingresa tu PIN de Acceso (4 Dígitos)</label>
+            <input
+              type="password"
+              maxLength={4}
+              placeholder="••••"
+              value={pinLoginInput}
+              onChange={e => setPinLoginInput(e.target.value)}
+              className="login-pin-input"
+              autoFocus
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleLoginPIN();
+              }}
+            />
+
+            {pinLoginError && (
+              <div className="login-error-msg">
+                <ShieldAlert size={16} /> {pinLoginError}
+              </div>
+            )}
+
+            <button className="btn-login-submit" onClick={handleLoginPIN}>
+              Ingresar al Puesto
+            </button>
+          </div>
+
+          <div className="login-helper-card">
+            <h4>💡 Terminales configurados de prueba:</h4>
+            <div className="helper-pins-grid">
+              <button
+                className="btn-quick-pin"
+                onClick={() => {
+                  setPinLoginInput('1234');
+                  const admin = config.vendedores.find(v => v.pinAcceso === '1234');
+                  if (admin) setUsuarioAutenticado(admin);
+                }}
+              >
+                👑 <strong>Administrador (Diego)</strong>
+                <small>PIN: 1234 (Ve todas las mesas y ganancias)</small>
+              </button>
+
+              <button
+                className="btn-quick-pin"
+                onClick={() => {
+                  setPinLoginInput('5555');
+                  const vend = config.vendedores.find(v => v.pinAcceso === '5555');
+                  if (vend) setUsuarioAutenticado(vend);
+                }}
+              >
+                🎰 <strong>Vendedor Carlos (San José)</strong>
+                <small>PIN: 5555 (Solo ve sus tiquetes)</small>
+              </button>
+
+              <button
+                className="btn-quick-pin"
+                onClick={() => {
+                  setPinLoginInput('7777');
+                  const vend = config.vendedores.find(v => v.pinAcceso === '7777');
+                  if (vend) setUsuarioAutenticado(vend);
+                }}
+              >
+                🍀 <strong>Vendedora Andrea (Alajuela)</strong>
+                <small>PIN: 7777 (Solo ve sus tiquetes)</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       {/* Top Banner de Suscripción Micro SaaS */}
@@ -336,33 +479,30 @@ export function App() {
             <span style={{ fontSize: '1.2rem' }}>{vendedorActual.logoEmoji}</span>
           </div>
           <div>
-            <h1 className="brand-title">{vendedorActual.nombreLocal} <span>PRO</span></h1>
-            <p className="brand-subtitle">{config.nombreBanca} • Vendedor: {vendedorActual.nombre}</p>
+            <h1 className="brand-title">{vendedorActual.nombreLocal} <span>{esAdmin ? 'ADMIN' : 'VENDEDOR'}</span></h1>
+            <p className="brand-subtitle">{config.nombreBanca} • Sesión: {vendedorActual.nombre}</p>
           </div>
         </div>
 
-        {/* Selector de Local / Vendedor Activo */}
-        <div className="vendor-switcher">
-          <select
-            value={config.vendedorActivoId}
-            onChange={e => setConfig(prev => ({ ...prev, vendedorActivoId: e.target.value }))}
-            className="vendor-select-dropdown"
-          >
-            {config.vendedores.map(v => (
-              <option key={v.id} value={v.id}>
-                {v.logoEmoji} {v.nombreLocal} ({v.nombre})
-              </option>
-            ))}
-          </select>
+        {/* Indicador de rol y botón de cerrar sesión */}
+        <div className="user-session-pill">
+          <span className={`role-badge ${esAdmin ? 'admin' : 'vendedor'}`}>
+            {esAdmin ? '👑 Vista Central' : '🔒 Terminal Aislado'}
+          </span>
+          <button className="btn-logout" onClick={handleCerrarSesion} title="Cerrar sesión de este terminal">
+            Salir
+          </button>
         </div>
 
         <div className="subscription-status">
           <span className="badge-trial">
             <Sparkles size={13} /> {config.subscripcion.diasRestantesTrial} días
           </span>
-          <button className="btn-upgrade" onClick={() => setTab('config')}>
-            Ajustes
-          </button>
+          {esAdmin && (
+            <button className="btn-upgrade" onClick={() => setTab('config')}>
+              Ajustes
+            </button>
+          )}
         </div>
       </header>
 
@@ -833,6 +973,8 @@ export function App() {
                         nombreLocal: `Puesto #${config.vendedores.length + 1}`,
                         telefono: config.sinpeTelefono,
                         logoEmoji: '📍',
+                        pinAcceso: `${Math.floor(1000 + Math.random() * 9000)}`,
+                        rol: 'vendedor',
                         activo: true
                       };
                       setConfig(prev => ({
@@ -914,6 +1056,40 @@ export function App() {
                               }));
                             }}
                           />
+                        </div>
+
+                        <div className="vci-field">
+                          <label>PIN de Acceso al Terminal (4 dígitos)</label>
+                          <input
+                            type="text"
+                            maxLength={4}
+                            value={v.pinAcceso || ''}
+                            placeholder="Ej: 1234"
+                            onChange={e => {
+                              const val = e.target.value;
+                              setConfig(prev => ({
+                                ...prev,
+                                vendedores: prev.vendedores.map(item => item.id === v.id ? { ...item, pinAcceso: val } : item)
+                              }));
+                            }}
+                          />
+                        </div>
+
+                        <div className="vci-field">
+                          <label>Rol de Acceso</label>
+                          <select
+                            value={v.rol}
+                            onChange={e => {
+                              const val = e.target.value as 'admin' | 'vendedor';
+                              setConfig(prev => ({
+                                ...prev,
+                                vendedores: prev.vendedores.map(item => item.id === v.id ? { ...item, rol: val } : item)
+                              }));
+                            }}
+                          >
+                            <option value="vendedor">Vendedor (Solo ve sus propias ventas)</option>
+                            <option value="admin">Administrador (Ve todas las mesas y ajustes)</option>
+                          </select>
                         </div>
                       </div>
 
@@ -1117,16 +1293,18 @@ export function App() {
           onClick={() => setTab('historial')}
         >
           <History size={20} />
-          <span>Tiquetes</span>
+          <span>Mis Tiquetes</span>
         </button>
 
-        <button
-          className={`nav-btn ${tab === 'config' ? 'active' : ''}`}
-          onClick={() => setTab('config')}
-        >
-          <Settings size={20} />
-          <span>Ajustes</span>
-        </button>
+        {esAdmin && (
+          <button
+            className={`nav-btn ${tab === 'config' ? 'active' : ''}`}
+            onClick={() => setTab('config')}
+          >
+            <Settings size={20} />
+            <span>Ajustes</span>
+          </button>
+        )}
       </nav>
     </div>
   );

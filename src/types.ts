@@ -16,6 +16,7 @@ export interface VentaItem {
   monto: number;
   cliente: string;
   vendedor: string;
+  vendedorId: string; // ID único del vendedor que emitió la venta
   timestamp: number;
   tiqueteCodigo: string;
 }
@@ -27,6 +28,8 @@ export interface VendedorLocal {
   telefono: string;
   logoEmoji: string; // Emoji representativo o iniciales
   logoUrl?: string; // URL de logo personalizado opcional
+  pinAcceso: string; // PIN de 4 dígitos para iniciar sesión
+  rol: 'admin' | 'vendedor'; // Administrador (ve todo) o Vendedor (solo ve sus ventas)
   activo: boolean;
 }
 
