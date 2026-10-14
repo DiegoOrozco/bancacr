@@ -606,15 +606,13 @@ export function App() {
                 <div className="input-group">
                   <label>Número (00 al 99)</label>
                   <input
-                    type="number"
-                    max={99}
-                    min={0}
-                    placeholder="Ej: 42"
-                    value={numeroInput}
+                    type="text"
+                    inputMode="none"
+                    readOnly
+                    placeholder="--"
+                    value={numeroInput.padStart(numeroInput ? 2 : 0, '0')}
                     disabled={sorteoSeleccionado.cerrado}
-                    onChange={e => setNumeroInput(e.target.value.slice(0, 2))}
                     className="big-num-input"
-                    autoFocus
                   />
                 </div>
 
