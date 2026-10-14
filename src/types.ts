@@ -31,6 +31,9 @@ export interface VendedorLocal {
   logoUrl?: string; // URL de logo personalizado opcional
   pinAcceso: string; // PIN de 4 dígitos para iniciar sesión
   rol: 'admin' | 'vendedor'; // Administrador (ve todo) o Vendedor (solo ve sus ventas)
+  pagoMultiplicador?: number; // Tasa de pago personalizada del puesto (ej: 80x o 75x)
+  topeMaximoPorNumero?: number; // Tope propio del vendedor (ej: ₡3,000)
+  diasRestantesMembresia?: number; // Días restantes de licencia del puesto
   activo: boolean;
 }
 

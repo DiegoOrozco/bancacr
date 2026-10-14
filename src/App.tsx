@@ -26,6 +26,9 @@ const DEFAULT_VENDEDORES: VendedorLocal[] = [
     logoEmoji: '👑',
     pinAcceso: '1234',
     rol: 'admin',
+    pagoMultiplicador: 80,
+    topeMaximoPorNumero: 10000,
+    diasRestantesMembresia: 30,
     activo: true
   },
   {
@@ -36,6 +39,9 @@ const DEFAULT_VENDEDORES: VendedorLocal[] = [
     logoEmoji: '🎰',
     pinAcceso: '5555',
     rol: 'vendedor',
+    pagoMultiplicador: 80,
+    topeMaximoPorNumero: 5000,
+    diasRestantesMembresia: 4, // Alerta: Le quedan 4 días
     activo: true
   },
   {
@@ -46,6 +52,9 @@ const DEFAULT_VENDEDORES: VendedorLocal[] = [
     logoEmoji: '🍀',
     pinAcceso: '7777',
     rol: 'vendedor',
+    pagoMultiplicador: 75,
+    topeMaximoPorNumero: 3000,
+    diasRestantesMembresia: 15,
     activo: true
   }
 ];
@@ -254,6 +263,9 @@ export function App() {
   }, [sorteoSeleccionado, ventasVisibles, ventaBrutaTotal]);
 
   const vendedorActual = usuarioAutenticado || config.vendedores[0];
+  const tasaPagoActiva = vendedorActual?.pagoMultiplicador || config.pagoMultiplicador;
+  const topeNumeroActivo = vendedorActual?.topeMaximoPorNumero || config.topeMaximoPorNumero;
+  const diasMembresiaActivos = vendedorActual?.diasRestantesMembresia ?? config.subscripcion.diasRestantesTrial;
 
   // Iniciar Sesión con PIN
   const handleLoginPIN = () => {
@@ -506,14 +518,24 @@ export function App() {
         </div>
 
         <div className="subscription-status">
-          <span className="badge-trial">
-            <Sparkles size={13} /> {config.subscripcion.diasRestantesTrial} días
-          </span>
-          {esAdmin && (
-            <button className="btn-upgrade" onClick={() => setTab('config')}>
-              Ajustes
-            </button>
+          {diasMembresiaActivos <= 5 ? (
+            <span 
+              className={`badge-trial-urgente ${diasMembresiaActivos <= 3 ? 'critico' : 'alerta'}`}
+              title="Tu membresía de TiemposCR está por vencer. Toca para renovar."
+              onClick={() => setTab('config')}
+            >
+              ⏳ <strong>{diasMembresiaActivos} {diasMembresiaActivos === 1 ? 'día' : 'días'} restantes</strong>
+              <small className="pulse-dot" />
+            </span>
+          ) : (
+            <span className="badge-trial">
+              <Sparkles size={13} /> {diasMembresiaActivos} días activos
+            </span>
           )}
+
+          <button className="btn-upgrade" onClick={() => setTab('config')}>
+            {esAdmin ? 'Ajustes' : 'Renovar Licencia'}
+          </button>
         </div>
       </header>
 
@@ -545,8 +567,12 @@ export function App() {
           <span className="metric-value">{ventasSorteoActual.length}</span>
         </div>
         <div className="metric-box">
-          <span className="metric-title">Tope x Número</span>
-          <span className="metric-value">{config.moneda}{config.topeMaximoPorNumero.toLocaleString()}</span>
+          <span className="metric-title">Tope del Puesto</span>
+          <span className="metric-value">{config.moneda}{topeNumeroActivo.toLocaleString()}</span>
+        </div>
+        <div className="metric-box">
+          <span className="metric-title">Tasa de Pago</span>
+          <span className="metric-value">{tasaPagoActiva} a 1</span>
         </div>
         <div className="metric-box highlight">
           <span className="metric-title">Núm. Más Cargado</span>
@@ -1095,6 +1121,54 @@ export function App() {
                               setConfig(prev => ({
                                 ...prev,
                                 vendedores: prev.vendedores.map(item => item.id === v.id ? { ...item, pinAcceso: val } : item)
+                              }));
+                            }}
+                          />
+                        </div>
+
+                        <div className="vci-field">
+                          <label>Tasa de Pago del Puesto (Multiplicador)</label>
+                          <input
+                            type="number"
+                            value={v.pagoMultiplicador ?? config.pagoMultiplicador}
+                            placeholder="80"
+                            onChange={e => {
+                              const val = Number(e.target.value);
+                              setConfig(prev => ({
+                                ...prev,
+                                vendedores: prev.vendedores.map(item => item.id === v.id ? { ...item, pagoMultiplicador: val } : item)
+                              }));
+                            }}
+                          />
+                        </div>
+
+                        <div className="vci-field">
+                          <label>Tope Máximo por Número ({config.moneda})</label>
+                          <input
+                            type="number"
+                            value={v.topeMaximoPorNumero ?? config.topeMaximoPorNumero}
+                            placeholder="5000"
+                            onChange={e => {
+                              const val = Number(e.target.value);
+                              setConfig(prev => ({
+                                ...prev,
+                                vendedores: prev.vendedores.map(item => item.id === v.id ? { ...item, topeMaximoPorNumero: val } : item)
+                              }));
+                            }}
+                          />
+                        </div>
+
+                        <div className="vci-field">
+                          <label>Días Restantes de Membresía</label>
+                          <input
+                            type="number"
+                            value={v.diasRestantesMembresia ?? 7}
+                            placeholder="7"
+                            onChange={e => {
+                              const val = Number(e.target.value);
+                              setConfig(prev => ({
+                                ...prev,
+                                vendedores: prev.vendedores.map(item => item.id === v.id ? { ...item, diasRestantesMembresia: val } : item)
                               }));
                             }}
                           />
