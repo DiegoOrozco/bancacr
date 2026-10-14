@@ -27,12 +27,42 @@ Micro aplicación orientada a la gestión operativa, control de riesgo y liquida
    - Banner de prueba gratuita (Trial de 7 días).
    - Planes Starter (Puesto Único: ₡10,000/mes) y Banquero PRO (Multi-mesa: ₡25,000/mes).
 
-## 🛠️ Ejecución Local
+## 📲 Métodos de Pago y Suscripción Integrados (Costa Rica)
+
+- **SINPE Móvil Directo:** Módulo en Ajustes que muestra número de teléfono, titular y detalle para transferencia bancaria directa (0% comisiones). Incluye botón preconfigurado de WhatsApp para enviar el comprobante.
+- **Enlace a Hotmart:** Para clientes que deseen pagar de forma recurrente con tarjeta de crédito/débito.
+- **Activador de Licencia por Token / PIN:** Desbloqueo instantáneo de 30 días adicionales para el cliente.
+
+---
+
+## ☁️ Publicación en Vercel (Paso a Paso)
+
+El proyecto ya cuenta con su archivo de configuración [`vercel.json`](file:///Users/diegorozco/Documents/MicroApps/banca-control/vercel.json) listo para producción.
+
+### Opción A (La más rápida vía Terminal):
+1. Abre tu terminal e ingresa a la carpeta:
+   ```bash
+   cd /Users/diegorozco/Documents/MicroApps/banca-control
+   npx vercel
+   ```
+2. Te pedirá iniciar sesión con tu cuenta de GitHub, Google o Correo (solo la primera vez).
+3. Presiona `Enter` a las opciones por defecto (`Y`).
+4. ¡En 30 segundos te dará tu enlace en vivo `https://banca-control-xxx.vercel.app`!
+
+### Opción B (Conectando a GitHub):
+1. Sube este repositorio a tu cuenta de GitHub (`git remote add origin ...`).
+2. Entra a [vercel.com](https://vercel.com) con tu cuenta.
+3. Haz clic en **"Add New Project"**, selecciona el repositorio y presiona **"Deploy"**.
+
+---
+
+## 🛠️ Ejecución Local y en Red Wi-Fi Móvil
 
 ```bash
 cd /Users/diegorozco/Documents/MicroApps/banca-control
-npm install
 npm run dev
 ```
 
-Disponible localmente en: `http://127.0.0.1:5173/`
+- **En tu Mac:** `http://localhost:5173/`
+- **En tu celular (mismo Wi-Fi):** `http://192.168.4.23:5173/`
+
