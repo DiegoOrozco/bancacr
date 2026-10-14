@@ -41,7 +41,7 @@ const DEFAULT_CONFIG: ConfiguracionBanca = {
   pagoMultiplicador: 80,
   topeMaximoPorNumero: 5000, // Máximo ₡5,000 por número en ventas acumuladas
   pagoMaximoTolerable: 400000, // ₡5,000 * 80 = ₡400,000 premio
-  nombreBanca: 'BancaControl Costa Rica',
+  nombreBanca: 'TiemposCR',
   contactoWhatsApp: '+506 8761-1422',
   sinpeTelefono: '8761-1422',
   sinpeNombreTitular: 'Diego Orozco Fonseca',
@@ -955,7 +955,7 @@ export function App() {
               <div className="spc-badge">
                 <DollarSign size={20} /> Métodos de Pago y Suscripción (Costa Rica)
               </div>
-              <h3>Planes y Activación de Licencia BancaControl</h3>
+              <h3>Planes y Activación de Licencia TiemposCR</h3>
               <p>Tu software operativo siempre respaldado, con topes automáticos en tiempo real y soporte continuo.</p>
 
               <div className="pricing-grid">
@@ -1016,7 +1016,7 @@ export function App() {
                   </div>
                   <div className="sinpe-data-pill">
                     <span>Detalle del Sinpe:</span>
-                    <strong>BancaControl - {config.nombreBanca}</strong>
+                    <strong>TiemposCR - {config.nombreBanca}</strong>
                   </div>
                 </div>
 
@@ -1025,7 +1025,7 @@ export function App() {
                     className="btn-sinpe-whatsapp"
                     onClick={() => {
                       const monto = config.subscripcion.plan === 'starter' ? '₡10,000' : '₡25,000';
-                      const msg = `👋 Hola, acabo de realizar la transferencia por Sinpe Móvil para la suscripción de *BancaControl PRO*.%0A` +
+                      const msg = `👋 Hola, acabo de realizar la transferencia por Sinpe Móvil para la suscripción de *TiemposCR PRO*.%0A` +
                         `🏢 *Banca:* ${config.nombreBanca}%0A` +
                         `📦 *Plan:* ${config.subscripcion.plan.toUpperCase()} (${monto}/mes)%0A` +
                         `Adjunto el comprobante del banco para la activación.`;

@@ -1,6 +1,6 @@
-# BancaControl PRO - Micro SaaS para Puestos de Tiempos
+# TiemposCR PRO - Micro SaaS para Puestos de Tiempos Costa Rica
 
-Micro aplicación orientada a la gestión operativa, control de riesgo y liquidación financiera en tiempo real para banqueros y vendedores de tiempos.
+Micro aplicación orientada a la gestión operativa, control de riesgo y liquidación financiera en tiempo real para banqueros y vendedores de tiempos en Costa Rica.
 
 ## 🚀 Características Principales
 
