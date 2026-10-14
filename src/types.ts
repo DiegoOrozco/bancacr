@@ -27,10 +27,14 @@ export interface ConfiguracionBanca {
   pagoMaximoTolerable: number; // Tope de premio por número (topeMaximo * multiplicador)
   nombreBanca: string;
   contactoWhatsApp: string;
+  sinpeTelefono: string;
+  sinpeNombreTitular: string;
+  hotmartLink: string;
   subscripcion: {
     plan: 'starter' | 'pro' | 'enterprise';
     activa: boolean;
     diasRestantesTrial: number;
+    fechaVencimiento: string;
   };
 }
 

@@ -1092,3 +1092,148 @@
 .nav-btn:hover {
   color: #f8fafc;
 }
+
+/* Sinpe Payment Box */
+.sinpe-payment-box {
+  margin-top: 24px;
+  background: #090e15;
+  border: 1px solid #1e3a5f;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sinpe-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sinpe-badge {
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 3px 8px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.sinpe-header h4 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.sinpe-instructions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  background: #0d1420;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 600px) {
+  .sinpe-instructions {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sinpe-data-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sinpe-data-pill span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.sinpe-data-pill strong {
+  font-size: 0.95rem;
+  font-family: var(--font-mono);
+  color: #38bdf8;
+}
+
+.sinpe-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-sinpe-whatsapp {
+  background: #16a34a;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-card-hotmart {
+  background: #1f2937;
+  color: #94a3b8;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.btn-card-hotmart:hover {
+  color: #f8fafc;
+  border-color: #38bdf8;
+}
+
+/* Token Activation Box */
+.token-activation-box {
+  margin-top: 18px;
+  background: #0d1420;
+  border: 1px dashed var(--border);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.token-activation-box h4 {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.tab-input-row {
+  display: flex;
+  gap: 10px;
+}
+
+.tab-input-row input {
+  flex: 1;
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.btn-activate-pin {
+  background: #0284c7;
+  color: #fff;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+

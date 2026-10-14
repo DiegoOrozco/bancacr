@@ -25,10 +25,14 @@ const DEFAULT_CONFIG: ConfiguracionBanca = {
   pagoMaximoTolerable: 400000, // ₡5,000 * 80 = ₡400,000 premio
   nombreBanca: 'Banca La Fortuna',
   contactoWhatsApp: '+506 8888-9999',
+  sinpeTelefono: '8888-9999',
+  sinpeNombreTitular: 'BancaControl Soporte CR',
+  hotmartLink: 'https://pay.hotmart.com/ejemplo-bancacontrol',
   subscripcion: {
     plan: 'pro',
     activa: true,
-    diasRestantesTrial: 7
+    diasRestantesTrial: 7,
+    fechaVencimiento: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   }
 };
 
@@ -768,13 +772,13 @@ export function App() {
               </div>
             </div>
 
-            {/* Módulo de Suscripción Micro SaaS */}
+            {/* Módulo de Suscripción Micro SaaS y Métodos de Cobro Costa Rica */}
             <div className="subscription-pricing-card">
               <div className="spc-badge">
-                <DollarSign size={20} /> Modelo de Suscripción para Banqueros
+                <DollarSign size={20} /> Métodos de Pago y Suscripción (Costa Rica)
               </div>
-              <h3>Gestiona tu Plan de Suscripción BancaControl</h3>
-              <p>Tu software operativo siempre respaldado, con topes automáticos y sincronización en la nube.</p>
+              <h3>Planes y Activación de Licencia BancaControl</h3>
+              <p>Tu software operativo siempre respaldado, con topes automáticos en tiempo real y soporte continuo.</p>
 
               <div className="pricing-grid">
                 <div className={`price-tier ${config.subscripcion.plan === 'starter' ? 'current' : ''}`}>
@@ -784,12 +788,12 @@ export function App() {
                   </div>
                   <ul className="tier-features">
                     <li>✓ 1 Punto de Venta</li>
-                    <li>✓ Matriz de riesgo 00-99</li>
+                    <li>✓ Matriz de riesgo 00-99 en vivo</li>
                     <li>✓ Topes de seguridad anti-quiebra</li>
                     <li>✓ Tiquetes WhatsApp ilimitados</li>
                   </ul>
                   <button className="btn-tier" onClick={() => setConfig(prev => ({ ...prev, subscripcion: { ...prev.subscripcion, plan: 'starter' } }))}>
-                    {config.subscripcion.plan === 'starter' ? 'Plan Seleccionado' : 'Elegir Starter'}
+                    {config.subscripcion.plan === 'starter' ? 'Plan Seleccionado' : 'Elegir Starter (₡10,000)'}
                   </button>
                 </div>
 
@@ -804,10 +808,98 @@ export function App() {
                     <li>✓ Consolidación de números en vivo</li>
                     <li>✓ Auditoría anti-fraude de tiquetes</li>
                     <li>✓ Respaldo de base de datos automático</li>
-                    <li>✓ Soporte VIP 24/7</li>
+                    <li>✓ Soporte VIP 24/7 vía WhatsApp</li>
                   </ul>
                   <button className="btn-tier primary" onClick={() => setConfig(prev => ({ ...prev, subscripcion: { ...prev.subscripcion, plan: 'pro' } }))}>
-                    {config.subscripcion.plan === 'pro' ? 'Plan Actual (Activo)' : 'Elegir PRO'}
+                    {config.subscripcion.plan === 'pro' ? 'Plan Seleccionado' : 'Elegir PRO (₡25,000)'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Caja de Pago Directo por Sinpe Móvil */}
+              <div className="sinpe-payment-box">
+                <div className="sinpe-header">
+                  <div className="sinpe-badge">🇨🇷 Método Preferido en Costa Rica</div>
+                  <h4>Pago Directo por SINPE Móvil (Sin intermediarios)</h4>
+                </div>
+
+                <div className="sinpe-instructions">
+                  <div className="sinpe-data-pill">
+                    <span>Número SINPE Móvil:</span>
+                    <strong>{config.sinpeTelefono}</strong>
+                  </div>
+                  <div className="sinpe-data-pill">
+                    <span>A nombre de:</span>
+                    <strong>{config.sinpeNombreTitular}</strong>
+                  </div>
+                  <div className="sinpe-data-pill">
+                    <span>Monto a transferir:</span>
+                    <strong>{config.subscripcion.plan === 'starter' ? '₡10,000' : '₡25,000'}</strong>
+                  </div>
+                  <div className="sinpe-data-pill">
+                    <span>Detalle del Sinpe:</span>
+                    <strong>BancaControl - {config.nombreBanca}</strong>
+                  </div>
+                </div>
+
+                <div className="sinpe-actions">
+                  <button
+                    className="btn-sinpe-whatsapp"
+                    onClick={() => {
+                      const monto = config.subscripcion.plan === 'starter' ? '₡10,000' : '₡25,000';
+                      const msg = `👋 Hola, acabo de realizar la transferencia por Sinpe Móvil para la suscripción de *BancaControl PRO*.%0A` +
+                        `🏢 *Banca:* ${config.nombreBanca}%0A` +
+                        `📦 *Plan:* ${config.subscripcion.plan.toUpperCase()} (${monto}/mes)%0A` +
+                        `Adjunto el comprobante del banco para la activación.`;
+                      window.open(`https://wa.me/${config.sinpeTelefono.replace(/[^0-9]/g, '')}?text=${msg}`, '_blank');
+                    }}
+                  >
+                    <Share2 size={16} /> Notificar Pago por WhatsApp
+                  </button>
+
+                  <a
+                    href={config.hotmartLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-card-hotmart"
+                  >
+                    ¿Prefieres pagar con Tarjeta? Pagar en Hotmart
+                  </a>
+                </div>
+              </div>
+
+              {/* Desbloqueo mediante Token o PIN */}
+              <div className="token-activation-box">
+                <h4>🔑 Activar Código de Suscripción / PIN de 30 días</h4>
+                <div className="tab-input-row">
+                  <input
+                    type="text"
+                    id="tokenInput"
+                    placeholder="Ingresa tu código PIN (Ej: PRO-2026-CR)"
+                  />
+                  <button
+                    className="btn-activate-pin"
+                    onClick={() => {
+                      const input = document.getElementById('tokenInput') as HTMLInputElement;
+                      if (input && input.value.trim().length >= 4) {
+                        setConfig(prev => ({
+                          ...prev,
+                          subscripcion: {
+                            ...prev.subscripcion,
+                            activa: true,
+                            diasRestantesTrial: 30,
+                            fechaVencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                          }
+                        }));
+                        confetti({ particleCount: 70, spread: 60 });
+                        alert('¡Suscripción activada con éxito por 30 días adicionales!');
+                        input.value = '';
+                      } else {
+                        alert('Ingresa un PIN o código de activación válido.');
+                      }
+                    }}
+                  >
+                    Activar 30 Días
                   </button>
                 </div>
               </div>
