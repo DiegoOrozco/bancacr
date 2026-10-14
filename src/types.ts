@@ -15,6 +15,7 @@ export interface VentaItem {
   numero: string; // '00' a '99'
   monto: number;
   cliente: string;
+  telefonoCliente?: string; // Número de WhatsApp del cliente
   vendedor: string;
   vendedorId: string; // ID único del vendedor que emitió la venta
   timestamp: number;

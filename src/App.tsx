@@ -123,6 +123,7 @@ export function App() {
   const [numeroInput, setNumeroInput] = useState<string>('');
   const [montoInput, setMontoInput] = useState<number>(1000);
   const [clienteInput, setClienteInput] = useState<string>('');
+  const [telefonoClienteInput, setTelefonoClienteInput] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [ultimoTiquete, setUltimoTiquete] = useState<VentaItem | null>(null);
 
@@ -314,6 +315,7 @@ export function App() {
       numero: numFormateado,
       monto: montoInput,
       cliente: clienteInput.trim() || 'Cliente Mostrador',
+      telefonoCliente: telefonoClienteInput.trim(),
       vendedor: `${vendedorActual.logoEmoji} ${vendedorActual.nombreLocal}`,
       vendedorId: vendedorActual.id,
       timestamp: Date.now(),
@@ -324,6 +326,7 @@ export function App() {
     setUltimoTiquete(nuevaVenta);
     setNumeroInput('');
     setClienteInput('');
+    setTelefonoClienteInput('');
   };
 
   // Cierre de Sorteo
@@ -385,7 +388,15 @@ export function App() {
       `⚡ *Hora:* ${new Date(tiquete.timestamp).toLocaleTimeString()}%0A` +
       `_¡Mucha suerte! Reclame su premio con este comprobante oficial._`;
 
-    window.open(`https://wa.me/?text=${texto}`, '_blank');
+    // Si el cliente tiene número registrado, se envía directo a su chat. Si no, WhatsApp te pide elegir el contacto.
+    const telLimpio = tiquete.telefonoCliente ? tiquete.telefonoCliente.replace(/[^0-9]/g, '') : '';
+    const phoneParam = telLimpio.length === 8 ? `506${telLimpio}` : telLimpio;
+
+    if (phoneParam) {
+      window.open(`https://wa.me/${phoneParam}?text=${texto}`, '_blank');
+    } else {
+      window.open(`https://wa.me/?text=${texto}`, '_blank');
+    }
   };
 
   // Si no ha iniciado sesión, mostrar pantalla de bloqueo / ingreso con PIN
@@ -604,7 +615,7 @@ export function App() {
                   </div>
                 </div>
 
-                <div className="input-group full-width">
+                <div className="input-group">
                   <label>Nombre del Cliente (Opcional)</label>
                   <input
                     type="text"
@@ -612,6 +623,17 @@ export function App() {
                     value={clienteInput}
                     disabled={sorteoSeleccionado.cerrado}
                     onChange={e => setClienteInput(e.target.value)}
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>WhatsApp del Cliente (Opcional)</label>
+                  <input
+                    type="tel"
+                    placeholder="Ej: 8888-9999"
+                    value={telefonoClienteInput}
+                    disabled={sorteoSeleccionado.cerrado}
+                    onChange={e => setTelefonoClienteInput(e.target.value)}
                   />
                 </div>
               </div>
@@ -664,6 +686,9 @@ export function App() {
                     </div>
                     <div className="ticket-meta">
                       <p><span>Cliente:</span> <strong>{ultimoTiquete.cliente}</strong></p>
+                      {ultimoTiquete.telefonoCliente && (
+                        <p><span>WhatsApp:</span> <strong>{ultimoTiquete.telefonoCliente}</strong></p>
+                      )}
                       <p><span>Sorteo:</span> {sorteoSeleccionado.nombre}</p>
                       <p><span>Hora:</span> {new Date(ultimoTiquete.timestamp).toLocaleTimeString()}</p>
                     </div>
@@ -685,7 +710,7 @@ export function App() {
                       className="btn-whatsapp-share"
                       onClick={() => handleCompartirWhatsApp(ultimoTiquete)}
                     >
-                      <Share2 size={16} /> Enviar por WhatsApp
+                      <Share2 size={16} /> {ultimoTiquete.telefonoCliente ? `Enviar a ${ultimoTiquete.telefonoCliente}` : 'Compartir por WhatsApp'}
                     </button>
                   </div>
                 ) : (
