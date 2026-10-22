@@ -68,7 +68,7 @@ const DEFAULT_CONFIG: ConfiguracionBanca = {
   contactoWhatsApp: '+506 8761-1422',
   sinpeTelefono: '8761-1422',
   sinpeNombreTitular: 'Diego Orozco Fonseca',
-  hotmartLink: 'https://pay.hotmart.com/ejemplo-bancacontrol',
+  hotmartLink: 'https://pay.hotmart.com/X108125014X?checkoutMode=2&off=pb22mwuz',
   vendedorActivoId: 'vend-1',
   vendedores: DEFAULT_VENDEDORES,
   subscripcion: {
@@ -114,7 +114,18 @@ export function App() {
   const [tab, setTab] = useState<'pos' | 'riesgo' | 'escrutinio' | 'historial' | 'config'>('pos');
   const [config, setConfig] = useState<ConfiguracionBanca>(() => {
     const saved = localStorage.getItem('banca_config');
-    return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (!parsed.hotmartLink || parsed.hotmartLink.includes('ejemplo-bancacontrol')) {
+          parsed.hotmartLink = DEFAULT_CONFIG.hotmartLink;
+        }
+        return parsed;
+      } catch {
+        return DEFAULT_CONFIG;
+      }
+    }
+    return DEFAULT_CONFIG;
   });
 
   const [sorteos, setSorteos] = useState<Sorteo[]>(() => {
@@ -1309,12 +1320,12 @@ export function App() {
                   </button>
 
                   <a
-                    href={config.hotmartLink}
+                    href="https://pay.hotmart.com/X108125014X?checkoutMode=2&off=pb22mwuz"
                     target="_blank"
                     rel="noreferrer"
-                    className="btn-card-hotmart"
+                    className="btn-card-hotmart hotmart-fb hotmart__button-checkout"
                   >
-                    ¿Prefieres pagar con Tarjeta? Pagar en Hotmart
+                    💳 ¿Prefieres pagar con Tarjeta? Pagar en Hotmart
                   </a>
                 </div>
               </div>
